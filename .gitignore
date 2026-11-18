@@ -1,0 +1,26 @@
+# Runtime / diagnostic logs must never be committed.
+# They leak internal paths, endpoints and potentially credentials.
+*.log
+logs/
+
+# Local secrets and environment overrides.
+.env
+.env.*
+!.env.example
+
+# Python bytecode, caches and build artefacts.
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+
+# OS / editor noise.
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
