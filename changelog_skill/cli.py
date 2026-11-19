@@ -11,7 +11,7 @@ from datetime import date as date_type
 from pathlib import Path
 
 from . import __version__
-from .git import read_commits_from_file, read_commits_from_repo
+from .git import read_commits_from_file, read_commits_from_repo, read_commits_from_stdin
 from .model import ChangelogError, InputError, OutputError, SourceError
 from .parser import parse_git_log, parse_git_log_lenient
 from .render import render_changelog
@@ -118,7 +118,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         if args.input is not None and str(args.input) == "-":
-            raw = sys.stdin.read()
+            raw = read_commits_from_stdin()
         elif args.input is not None:
             raw = read_commits_from_file(args.input)
         else:

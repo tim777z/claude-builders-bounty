@@ -79,12 +79,13 @@ source, `5` unwritable output. CI and scripts can rely on these codes.
 ### Testing
 
 ```bash
-python -m unittest discover -s tests -v   # 45 unit and integration tests
+python -m unittest discover -s tests -v   # 55 unit and integration tests
 python -m ruff check .                     # lint (security rules enabled)
 python -m ruff format --check .            # deterministic formatting
 ```
 
-The same three commands, plus a CLI smoke test, run on every pull request in
+The same three commands, plus a CLI smoke test, run on every pull request on
+Python 3.10, 3.11 and 3.12 in
 [.github/workflows/ci.yml](.github/workflows/ci.yml). Development tooling is
 pinned in `requirements-dev.txt`; GitHub Actions are pinned to immutable SHAs.
 
@@ -105,11 +106,13 @@ without spawning git or touching the network.
 
 **Security controls:** git is invoked with a fixed argument vector and
 `shell=False` (no command injection via `--repo`); repository paths are
-resolved and validated; commit count, line count and input size are capped to
-prevent resource exhaustion; control characters and unknown commit types are
-rejected with line-numbered errors; Markdown/HTML syntax in commit subjects is
-escaped so a hostile commit cannot inject active content into a published
-CHANGELOG; output is written atomically; CI runs with read-only permissions.
+resolved and validated; every input source (git, file and stdin) is capped at
+1 MiB and commit/line counts are bounded to prevent resource exhaustion;
+control characters, Unicode line/paragraph separators and bidirectional text
+overrides (Trojan Source) are rejected with line-numbered errors, as are
+unknown commit types; Markdown/HTML syntax in commit subjects is escaped so a
+hostile commit cannot inject active content into a published CHANGELOG; output
+is written atomically; CI runs with read-only permissions.
 
 No Docker configuration is provided because the tool has no services or
 external infrastructure to orchestrate — adding a container would add attack

@@ -70,6 +70,11 @@ class CliTests(unittest.TestCase):
         self.assertEqual(status, EXIT_OK)
         self.assertIn("add changelog command", stdout)
 
+    def test_oversized_stdin_returns_source_exit_code(self) -> None:
+        with patch("sys.stdin", io.StringIO("x" * (1024 * 1024 + 1))):
+            status, _ = run_cli(["--input", "-", "--release-version", "0.1.0"])
+        self.assertEqual(status, EXIT_SOURCE)
+
     def test_malformed_commit_returns_input_exit_code(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory) / "commits.txt"

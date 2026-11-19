@@ -18,6 +18,11 @@ build/
 dist/
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
 
 # OS / editor noise.
 .DS_Store

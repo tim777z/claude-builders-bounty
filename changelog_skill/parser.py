@@ -22,6 +22,46 @@ MAX_SUBJECT_LENGTH = 200
 MAX_LINES = 5_000
 MAX_RAW_LINE_LENGTH = 512
 
+# Characters that must never appear in commit text:
+#  * C1 controls (U+0080-U+009F), including NEL, which some renderers treat as
+#    a line break;
+#  * Unicode line/paragraph separators, which str.splitlines() honours and
+#    which would otherwise inject extra lines into the rendered CHANGELOG;
+#  * bidirectional overrides (Trojan Source, CVE-2021-42574 class), which make
+#    a commit subject display differently from its actual content.
+_C1_CONTROLS = frozenset(range(0x80, 0xA0))
+_UNICODE_SEPARATORS = frozenset({0x2028, 0x2029})
+_BIDI_CONTROLS = frozenset({0x061C, 0x200E, 0x200F, *range(0x202A, 0x202F), *range(0x2066, 0x206A)})
+_FORBIDDEN_CODEPOINTS = _C1_CONTROLS | _UNICODE_SEPARATORS | _BIDI_CONTROLS
+
+
+def _is_forbidden(code: int) -> bool:
+    return code < 32 or code == 127 or code in _FORBIDDEN_CODEPOINTS
+
+
+def _reject_unsafe_text(text: str) -> None:
+    """Reject unsafe characters before splitting a whole log into lines.
+
+    ``str.splitlines()`` treats U+2028/U+2029 and several control characters as
+    line terminators. Checking first keeps a hostile payload from being split
+    into fragments that would produce a misleading error or a degraded log in
+    lenient mode.
+    """
+    if not isinstance(text, str):
+        raise InputError(f"expected text, got {type(text).__name__}")
+    line_number = 1
+    for char in text:
+        if char == "\n":
+            line_number += 1
+            continue
+        if char in ("\r", "\t"):
+            continue
+        code = ord(char)
+        if _is_forbidden(code):
+            raise InputError(
+                f"line {line_number}: input contains a control character (U+{code:04X})"
+            )
+
 
 def _reject_control_characters(
     value: str, *, field: str, line_number: int, allow_tab: bool = False
@@ -30,7 +70,7 @@ def _reject_control_characters(
         code = ord(char)
         if allow_tab and char == "\t":
             continue
-        if code < 32 or code == 127:
+        if _is_forbidden(code):
             raise InputError(
                 f"line {line_number}: {field} contains a control character (U+{code:04X})"
             )
@@ -100,6 +140,7 @@ def parse_git_log(text: str, *, max_lines: int = MAX_LINES) -> tuple[Commit, ...
     """Parse a whole ``git log`` payload, skipping only blank separator lines."""
     if not isinstance(max_lines, int) or not 1 <= max_lines <= MAX_LINES:
         raise InputError(f"max_lines must be an integer between 1 and {MAX_LINES}")
+    _reject_unsafe_text(text)
 
     lines = [line for line in text.splitlines() if line.strip()]
     if len(lines) > max_lines:
@@ -121,6 +162,7 @@ def parse_git_log_lenient(
     """
     if not isinstance(max_lines, int) or not 1 <= max_lines <= MAX_LINES:
         raise InputError(f"max_lines must be an integer between 1 and {MAX_LINES}")
+    _reject_unsafe_text(text)
 
     lines = [line for line in text.splitlines() if line.strip()]
     if len(lines) > max_lines:

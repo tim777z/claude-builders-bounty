@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 from pathlib import Path
+from typing import TextIO
 
 from .model import SourceError
 
@@ -66,6 +68,27 @@ def read_commits_from_repo(repo: Path, *, max_count: int = 500) -> str:
     if len(output.encode("utf-8")) > MAX_INPUT_BYTES:
         raise SourceError("git history exceeds the 1 MiB safety limit")
     return output
+
+
+def read_commits_from_stdin(stream: TextIO | None = None) -> str:
+    """Read raw commit lines from stdin with the same 1 MiB cap as files.
+
+    Reading an unbounded stream into memory would let a hostile pipeline exhaust
+    the process. Reading at most one byte/character beyond the cap and checking
+    the UTF-8 byte length keeps the parser's safety limits consistent across
+    every input source. ``stream`` is injectable so the behaviour is testable
+    without replacing the real process stdin.
+    """
+    source = sys.stdin if stream is None else stream
+    try:
+        text = source.read(MAX_INPUT_BYTES + 1)
+    except (OSError, UnicodeError) as exc:
+        raise SourceError(f"could not read stdin: {exc}") from exc
+    if not isinstance(text, str):
+        raise SourceError("stdin did not return text")
+    if len(text.encode("utf-8")) > MAX_INPUT_BYTES:
+        raise SourceError("stdin history exceeds the 1 MiB safety limit")
+    return text
 
 
 def read_commits_from_file(source: Path) -> str:
