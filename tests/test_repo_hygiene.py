@@ -24,7 +24,17 @@ class RepositoryHygieneTests(unittest.TestCase):
 
     def test_gitignore_covers_logs_and_secrets(self) -> None:
         ignore = (REPO_ROOT / ".gitignore").read_text(encoding="utf-8")
-        for pattern in ("*.log", ".env", ".env.*", "!.env.example", "__pycache__/"):
+        for pattern in (
+            "*.log",
+            ".env",
+            ".env.*",
+            "!.env.example",
+            "__pycache__/",
+            ".pytest_cache/",
+            ".ruff_cache/",
+            ".mypy_cache/",
+            ".coverage",
+        ):
             with self.subTest(pattern=pattern):
                 self.assertIn(pattern, ignore)
 

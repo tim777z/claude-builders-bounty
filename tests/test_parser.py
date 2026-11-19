@@ -52,6 +52,18 @@ class ParseCommitLineTests(unittest.TestCase):
         with self.assertRaisesRegex(InputError, "control character"):
             parse_commit_line(f"{SHA}\tfeat: bad\x1b[31m subject")
 
+    def test_rejects_unicode_line_separator(self) -> None:
+        with self.assertRaisesRegex(InputError, "control character"):
+            parse_commit_line(f"{SHA}\tfeat: first\u2028second line")
+
+    def test_rejects_c1_control_character(self) -> None:
+        with self.assertRaisesRegex(InputError, "control character"):
+            parse_commit_line(f"{SHA}\tfeat: bad\u0085subject")
+
+    def test_rejects_bidirectional_override(self) -> None:
+        with self.assertRaisesRegex(InputError, "control character"):
+            parse_commit_line(f"{SHA}\tfeat: spoof\u202ereversed")
+
     def test_rejects_oversized_subject(self) -> None:
         subject = "x" * (MAX_SUBJECT_LENGTH + 1)
         with self.assertRaisesRegex(InputError, "subject exceeds"):
@@ -85,6 +97,22 @@ class ParseGitLogTests(unittest.TestCase):
 
     def test_empty_log_is_valid(self) -> None:
         self.assertEqual(parse_git_log(""), ())
+
+    def test_rejects_unsafe_character_before_splitting(self) -> None:
+        # U+2028 is a line separator to splitlines(), so the payload guard must
+        # reject it before a fragment could be parsed as a separate commit.
+        text = f"{SHA}\tfeat: first\u2028second"
+        with self.assertRaisesRegex(InputError, "control character"):
+            parse_git_log(text)
+
+    def test_lenient_mode_does_not_silently_accept_unsafe_text(self) -> None:
+        text = f"{SHA}\tfeat: ok\n{SHA}\tfeat: spoof\u202ereversed\n"
+        with self.assertRaisesRegex(InputError, "control character"):
+            parse_git_log_lenient(text)
+
+    def test_rejects_non_text_payload(self) -> None:
+        with self.assertRaisesRegex(InputError, "expected text"):
+            parse_git_log(None)  # type: ignore[arg-type]
 
 
 class LenientParseTests(unittest.TestCase):

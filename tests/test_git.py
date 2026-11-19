@@ -2,13 +2,19 @@
 
 from __future__ import annotations
 
+import io
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from changelog_skill.git import read_commits_from_file, read_commits_from_repo
+from changelog_skill.git import (
+    MAX_INPUT_BYTES,
+    read_commits_from_file,
+    read_commits_from_repo,
+    read_commits_from_stdin,
+)
 from changelog_skill.model import SourceError
 
 SHA = "a" * 40
@@ -61,6 +67,29 @@ class GitAdapterTests(unittest.TestCase):
             with patch("changelog_skill.git.subprocess.run", return_value=completed):
                 with self.assertRaisesRegex(SourceError, "git log failed"):
                     read_commits_from_repo(repo)
+
+
+class StdinAdapterTests(unittest.TestCase):
+    def test_reads_valid_text(self) -> None:
+        stream = io.StringIO(f"{SHA}\tfeat: ok\n")
+        self.assertEqual(read_commits_from_stdin(stream), f"{SHA}\tfeat: ok\n")
+
+    def test_rejects_oversized_stream(self) -> None:
+        stream = io.StringIO("a" * (MAX_INPUT_BYTES + 1))
+        with self.assertRaisesRegex(SourceError, "stdin history exceeds"):
+            read_commits_from_stdin(stream)
+
+    def test_reads_no_more_than_the_cap_plus_one_character(self) -> None:
+        class CountingStream(io.StringIO):
+            requested: int | None = None
+
+            def read(self, size: int | None = -1) -> str:  # type: ignore[override]
+                CountingStream.requested = size
+                return super().read(size)
+
+        stream = CountingStream("x")
+        read_commits_from_stdin(stream)
+        self.assertEqual(CountingStream.requested, MAX_INPUT_BYTES + 1)
 
 
 class FileAdapterTests(unittest.TestCase):

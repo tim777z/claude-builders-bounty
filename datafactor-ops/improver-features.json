@@ -24,6 +24,26 @@
       "id": "docs-env-example-and-generated-changelog",
       "status": "verified",
       "test": "python -m unittest discover -s tests -v"
+    },
+    {
+      "id": "bounded-stdin-input",
+      "status": "verified",
+      "test": "python -m unittest discover -s tests -v"
+    },
+    {
+      "id": "unicode-control-and-bidi-hardening",
+      "status": "verified",
+      "test": "python -m unittest discover -s tests -v"
+    },
+    {
+      "id": "cache-ignore-hygiene",
+      "status": "verified",
+      "test": "python -m unittest discover -s tests -v"
+    },
+    {
+      "id": "ci-python-version-matrix",
+      "status": "verified",
+      "test": "python -m unittest discover -s tests -v"
     }
   ]
 }
