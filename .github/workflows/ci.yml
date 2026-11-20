@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   verify:
-    name: Lint, test and smoke-test the CLI (Python ${{ matrix.python-version }})
+    name: Lint, format, test, audit and smoke-test the CLI (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
@@ -34,11 +34,13 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-          cache-dependency-path: requirements-dev.txt
+          cache-dependency-path: requirements-dev.lock
 
       - name: Install pinned tooling and the package
+        # Install from the hashed lockfile so CI and local clones resolve an
+        # identical, integrity-checked dependency set.
         run: |
-          python -m pip install --disable-pip-version-check -r requirements-dev.txt
+          python -m pip install --disable-pip-version-check -r requirements-dev.lock
           python -m pip install --disable-pip-version-check -e .
 
       - name: Lint
@@ -47,8 +49,14 @@ jobs:
       - name: Check formatting
         run: python -m ruff format --check .
 
-      - name: Run unit tests
-        run: python -m unittest discover -s tests -v
+      - name: Run unit tests with an enforced coverage floor
+        run: |
+          python -m coverage run -m unittest discover -s tests -v
+          python -m coverage report --fail-under=85
+
+      - name: Audit dependencies
+        # Audits the exact hash-locked toolchain; the runtime package has none.
+        run: python -m pip-audit -r requirements-dev.lock
 
       - name: Smoke-test the CLI against this repository's history
         run: python -m changelog_skill --repo . --skip-invalid --release-version 0.0.0 --release-date 1970-01-01 --output "$RUNNER_TEMP/CHANGELOG.smoke.md"

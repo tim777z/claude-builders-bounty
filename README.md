@@ -54,8 +54,16 @@ external services are needed.
 ```bash
 git clone https://github.com/tim777z/claude-builders-bounty.git
 cd claude-builders-bounty
-python -m pip install -e .          # zero runtime dependencies
+python -m pip install -e .          # runtime: zero third-party dependencies
+
+# Developers and CI: install the exact, hash-checked toolchain from the lockfile
+python -m pip install -r requirements-dev.lock
 ```
+
+`requirements-dev.lock` pins every development tool and its transitive
+dependencies with SHA-256 hashes, so a fresh clone resolves the same set CI
+does. Locally you can use `make install-dev` as a shorthand for installing both
+the lockfile and the package.
 
 ### Usage
 
@@ -76,18 +84,30 @@ After installation the `changelog-skill` console script is also available.
 Exit codes: `0` success, `2` bad CLI usage, `3` invalid input, `4` unreadable
 source, `5` unwritable output. CI and scripts can rely on these codes.
 
+For automation, `--log-format json` emits one JSON object per diagnostic line
+on stderr with `level`, `logger` and `message` fields; the default `text` format
+is unchanged. Add `--verbose` to enable DEBUG-level records.
+
 ### Testing
 
 ```bash
-python -m unittest discover -s tests -v   # 55 unit and integration tests
-python -m ruff check .                     # lint (security rules enabled)
-python -m ruff format --check .            # deterministic formatting
+make test                                  # canonical entry point for the suite
+make all                                   # lint + format check + tests + coverage
+
+# Equivalent direct commands (make is optional; works on any platform):
+python -m unittest discover -s tests -v      # unit and integration tests
+python -m ruff check .                       # lint (security rules enabled)
+python -m ruff format --check .              # deterministic formatting
+python -m coverage run -m unittest discover -s tests
+python -m coverage report --fail-under=85    # enforced coverage floor
+python -m pip-audit -r requirements-dev.lock # dependency vulnerability audit
 ```
 
-The same three commands, plus a CLI smoke test, run on every pull request on
-Python 3.10, 3.11 and 3.12 in
+The same commands, plus a CLI smoke test, run on every push to `main` and every
+pull request on Python 3.10, 3.11 and 3.12 in
 [.github/workflows/ci.yml](.github/workflows/ci.yml). Development tooling is
-pinned in `requirements-dev.txt`; GitHub Actions are pinned to immutable SHAs.
+pinned with exact versions and hashes in `requirements-dev.lock`; GitHub Actions
+are pinned to immutable SHAs.
 
 ### Architecture
 
@@ -98,6 +118,8 @@ pinned in `requirements-dev.txt`; GitHub Actions are pinned to immutable SHAs.
 | `changelog_skill/render.py` | Deterministic Markdown rendering and escaping |
 | `changelog_skill/git.py` | Bounded git/filesystem adapters |
 | `changelog_skill/cli.py` | Argument parsing, exit codes, atomic output writes |
+| `Makefile`, `requirements-dev.lock` | One-command, reproducible local/CI toolchain |
+| `Dockerfile`, `docker-compose.yml` | Hardened, one-command isolated execution |
 | `tests/` | Unit tests mirroring each module |
 
 Data flows one way: adapter → parser → renderer → output. Parsing and
@@ -114,9 +136,22 @@ unknown commit types; Markdown/HTML syntax in commit subjects is escaped so a
 hostile commit cannot inject active content into a published CHANGELOG; output
 is written atomically; CI runs with read-only permissions.
 
-No Docker configuration is provided because the tool has no services or
-external infrastructure to orchestrate — adding a container would add attack
-surface and maintenance cost without making the project easier to run.
+### Isolated execution (Docker)
+
+A single hardened container is the whole stack — there are no databases or
+backing services to orchestrate:
+
+```bash
+docker compose build
+RELEASE_VERSION=0.2.0 docker compose run --rm changelog
+```
+
+The image runs as a non-root UID and writes no bytecode; Compose adds a
+read-only root filesystem, drops all Linux capabilities, sets
+`no-new-privileges`, removes networking and mounts the repository read-only.
+This lets a reviewer sandbox untrusted git history in one command instead of
+running it against the host Python. Docker is optional — the `pip`/`make`
+path above is the primary workflow.
 
 ---
 

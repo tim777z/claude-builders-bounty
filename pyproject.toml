@@ -18,7 +18,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-dev = ["ruff==0.7.4"]
+dev = ["ruff==0.7.4", "coverage==7.16.1", "pip-audit==2.7.3"]
 
 [project.scripts]
 changelog-skill = "changelog_skill.cli:main"
@@ -26,6 +26,21 @@ changelog-skill = "changelog_skill.cli:main"
 [tool.setuptools.packages.find]
 include = ["changelog_skill*"]
 exclude = ["tests*"]
+
+# Explicit test discovery so local runners and static scanners can find the
+# unittest suite without guessing a command.
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
+[tool.coverage.run]
+branch = true
+source = ["changelog_skill"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 85
 
 [tool.ruff]
 line-length = 100

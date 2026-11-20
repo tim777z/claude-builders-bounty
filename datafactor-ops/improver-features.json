@@ -44,6 +44,36 @@
       "id": "ci-python-version-matrix",
       "status": "verified",
       "test": "python -m unittest discover -s tests -v"
+    },
+    {
+      "id": "stray-runtime-log-removed",
+      "status": "blocked",
+      "test": "python -m unittest discover -s tests -v"
+    },
+    {
+      "id": "fresh-clone-reproducible-toolchain",
+      "status": "verified",
+      "test": "python -m unittest discover -s tests -v"
+    },
+    {
+      "id": "coverage-threshold-in-ci",
+      "status": "verified",
+      "test": "python -m coverage run -m unittest discover -s tests && python -m coverage report --fail-under=85"
+    },
+    {
+      "id": "dependency-audit-in-ci",
+      "status": "verified",
+      "test": "python -m pip-audit -r requirements-dev.lock"
+    },
+    {
+      "id": "hardened-container-self-containment",
+      "status": "verified",
+      "test": "python -m unittest discover -s tests -v"
+    },
+    {
+      "id": "structured-json-logging",
+      "status": "verified",
+      "test": "python -m unittest discover -s tests -v"
     }
   ]
 }

@@ -1,3 +1,7 @@
-# Pinned lint toolchain - kept identical in CI and local development.
+# Pinned development toolchain - identical locally and in CI.
 # The runtime package itself has zero third-party dependencies.
+# Exact versions (with transitive dependency hashes) are locked in
+# requirements-dev.lock; install from that file for reproducible builds.
+coverage==7.16.1
+pip-audit==2.7.3
 ruff==0.7.4
