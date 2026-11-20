@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import io
+import json
 import logging
 import tempfile
 import unittest
@@ -134,3 +135,53 @@ class CliTests(unittest.TestCase):
             main(["--version"])
         self.assertEqual(raised.exception.code, 0)
         self.assertIn("changelog-skill", stdout.getvalue())
+
+    def _run_with_stderr(self, arguments: list[str]) -> tuple[int, str]:
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            status, _ = run_cli(arguments)
+        return status, stderr.getvalue()
+
+    def test_json_log_format_emits_valid_json_lines(self) -> None:
+        logging.disable(logging.NOTSET)
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "commits.txt"
+            target = Path(directory) / "CHANGELOG.md"
+            source.write_text(VALID_LINE, encoding="utf-8")
+
+            status, stderr = self._run_with_stderr(
+                [
+                    "--input",
+                    str(source),
+                    "--release-version",
+                    "0.1.0",
+                    "--output",
+                    str(target),
+                    "--log-format",
+                    "json",
+                    "--verbose",
+                ]
+            )
+
+            self.assertEqual(status, EXIT_OK)
+            lines = stderr.splitlines()
+            self.assertTrue(lines, "expected at least one structured log line")
+            for line in lines:
+                payload = json.loads(line)
+                self.assertEqual(payload["logger"], "changelog_skill")
+                self.assertIn("level", payload)
+                self.assertIn("message", payload)
+
+    def test_default_log_format_is_human_readable_text(self) -> None:
+        logging.disable(logging.NOTSET)
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "commits.txt"
+            target = Path(directory) / "CHANGELOG.md"
+            source.write_text(VALID_LINE, encoding="utf-8")
+
+            status, stderr = self._run_with_stderr(
+                ["--input", str(source), "--release-version", "0.1.0", "--output", str(target)]
+            )
+
+            self.assertEqual(status, EXIT_OK)
+            self.assertTrue(stderr.startswith("INFO: "))

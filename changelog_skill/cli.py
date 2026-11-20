@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import os
 import sys
@@ -17,6 +18,21 @@ from .parser import parse_git_log, parse_git_log_lenient
 from .render import render_changelog
 
 LOGGER = logging.getLogger("changelog_skill")
+
+
+class _JsonFormatter(logging.Formatter):
+    """Emit one JSON object per log record for machine-readable diagnostics."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        payload: dict[str, str] = {
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }
+        if record.exc_info:
+            payload["exception"] = self.formatException(record.exc_info)
+        return json.dumps(payload, ensure_ascii=False)
+
 
 EXIT_OK = 0
 EXIT_INPUT = 3
@@ -71,6 +87,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="skip non-Conventional commits (reported as a warning) instead of failing",
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="enable debug logging")
+    parser.add_argument(
+        "--log-format",
+        choices=("text", "json"),
+        default="text",
+        help="diagnostic output format on stderr (default: text)",
+    )
     return parser
 
 
@@ -108,13 +130,28 @@ def _write_output(text: str, destination: Path | None) -> None:
                 pass
 
 
+def _configure_logging(*, verbose: bool, json_format: bool) -> None:
+    """Attach one deterministic handler to this package's logger.
+
+    Configuring our own logger rather than the root logger means embedding the
+    CLI in another process cannot silently reconfigure that process's logs.
+    """
+    formatter: logging.Formatter
+    if json_format:
+        formatter = _JsonFormatter()
+    else:
+        formatter = logging.Formatter("%(levelname)s: %(message)s")
+    handler = logging.StreamHandler(sys.stderr)
+    handler.setFormatter(formatter)
+    LOGGER.handlers.clear()
+    LOGGER.addHandler(handler)
+    LOGGER.setLevel(logging.DEBUG if verbose else logging.INFO)
+    LOGGER.propagate = False
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    logging.basicConfig(
-        level=logging.DEBUG if args.verbose else logging.INFO,
-        format="%(levelname)s: %(message)s",
-        stream=sys.stderr,
-    )
+    _configure_logging(verbose=args.verbose, json_format=args.log_format == "json")
 
     try:
         if args.input is not None and str(args.input) == "-":

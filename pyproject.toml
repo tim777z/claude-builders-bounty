@@ -7,7 +7,7 @@ name = "changelog-skill"
 version = "0.1.0"
 description = "Generate a Markdown CHANGELOG from Conventional Commits, with no runtime dependencies."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = []
 authors = [{ name = "claude-builders-bounty contributors" }]
 classifiers = [
@@ -18,7 +18,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-dev = ["ruff==0.7.4"]
+dev = ["ruff==0.7.4", "coverage==7.16.1", "pip-audit==2.7.3"]
 
 [project.scripts]
 changelog-skill = "changelog_skill.cli:main"
@@ -27,9 +27,24 @@ changelog-skill = "changelog_skill.cli:main"
 include = ["changelog_skill*"]
 exclude = ["tests*"]
 
+# Explicit test discovery so local runners and static scanners can find the
+# unittest suite without guessing a command.
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
+[tool.coverage.run]
+branch = true
+source = ["changelog_skill"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 85
+
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py311"
 exclude = [".git", ".venv", "venv", "__pycache__", "build", "dist"]
 
 [tool.ruff.lint]
