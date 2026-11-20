@@ -7,7 +7,7 @@ name = "changelog-skill"
 version = "0.1.0"
 description = "Generate a Markdown CHANGELOG from Conventional Commits, with no runtime dependencies."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = []
 authors = [{ name = "claude-builders-bounty contributors" }]
 classifiers = [
@@ -44,7 +44,7 @@ fail_under = 85
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py311"
 exclude = [".git", ".venv", "venv", "__pycache__", "build", "dist"]
 
 [tool.ruff.lint]

@@ -48,7 +48,7 @@ this repository.
 
 ### Getting started
 
-Requirements: Python 3.10+ and git. No accounts, API keys, databases or
+Requirements: Python 3.11+ and git. No accounts, API keys, databases or
 external services are needed.
 
 ```bash
@@ -63,7 +63,11 @@ python -m pip install -r requirements-dev.lock
 `requirements-dev.lock` pins every development tool and its transitive
 dependencies with SHA-256 hashes, so a fresh clone resolves the same set CI
 does. Locally you can use `make install-dev` as a shorthand for installing both
-the lockfile and the package.
+the lockfile and the package. The supported floor is Python 3.11 because the
+advisory-free `filelock` used by `pip-audit`'s cache (`4.2.12`) requires it;
+older 3.10-compatible releases carry known vulnerabilities, so CI tests only
+interpreters on which the entire hash-locked toolchain can be installed and
+audited cleanly.
 
 ### Usage
 
@@ -104,7 +108,7 @@ python -m pip_audit -r requirements-dev.lock  # dependency vulnerability audit
 ```
 
 The same commands, plus a CLI smoke test, run on every push to `main` and every
-pull request on Python 3.10, 3.11 and 3.12 in
+pull request on Python 3.11 and 3.12 in
 [.github/workflows/ci.yml](.github/workflows/ci.yml). Development tooling is
 pinned with exact versions and hashes in `requirements-dev.lock`; GitHub Actions
 are pinned to immutable SHAs.

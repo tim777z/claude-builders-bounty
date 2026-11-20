@@ -26,6 +26,21 @@ class ReproducibleToolchainTests(unittest.TestCase):
         ]
         self.assertEqual(pins, ["coverage==7.16.1", "pip-audit==2.7.3", "ruff==0.7.4"])
 
+    def test_python_floor_matches_locked_toolchain(self) -> None:
+        # The hash-locked toolchain pins the advisory-free filelock 4.2.12,
+        # which declares Requires-Python >=3.11. Advertising 3.10 in the CI
+        # matrix made the install step fail with "requires a different Python";
+        # downgrading to vulnerable 3.x would instead fail `pip-audit`. Keep
+        # the declared floor, the linter target and the tested matrix aligned.
+        config = _read("pyproject.toml")
+        workflow = _read(".github/workflows/ci.yml")
+        self.assertIn('requires-python = ">=3.11"', config)
+        self.assertNotIn('requires-python = ">=3.10"', config)
+        self.assertIn('target-version = "py311"', config)
+        self.assertIn('python-version: ["3.11", "3.12"]', workflow)
+        self.assertNotIn('"3.10"', workflow)
+        self.assertIn("filelock==4.2.12", _read("requirements-dev.lock"))
+
     def test_lockfile_is_present_hashed_and_complete(self) -> None:
         locked = [line.split("==")[0] for line in _read("requirements-dev.lock").splitlines()]
         for tool in ("coverage", "pip-audit", "ruff"):

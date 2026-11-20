@@ -1,6 +1,11 @@
 {
   "features": [
     {
+      "id": "ci-python-floor-and-lockfile-consistency",
+      "status": "verified",
+      "test": "python -m unittest discover -s tests -v"
+    },
+    {
       "id": "ci-audit-invocation-fix",
       "status": "verified",
       "test": "python -m pip_audit --version && python -m unittest discover -s tests -v"
