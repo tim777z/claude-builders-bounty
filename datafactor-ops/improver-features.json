@@ -1,6 +1,16 @@
 {
   "features": [
     {
+      "id": "ci-audit-invocation-fix",
+      "status": "verified",
+      "test": "python -m pip_audit --version && python -m unittest discover -s tests -v"
+    },
+    {
+      "id": "ci-node24-action-pins",
+      "status": "verified",
+      "test": "python -m unittest discover -s tests -v"
+    },
+    {
       "id": "remove-stray-runtime-log",
       "status": "verified",
       "test": "python -m unittest discover -s tests -v"
@@ -63,7 +73,7 @@
     {
       "id": "dependency-audit-in-ci",
       "status": "verified",
-      "test": "python -m pip-audit -r requirements-dev.lock"
+      "test": "python -m pip_audit -r requirements-dev.lock"
     },
     {
       "id": "hardened-container-self-containment",

@@ -60,6 +60,28 @@ class ReproducibleToolchainTests(unittest.TestCase):
         workflow = _read(".github/workflows/ci.yml")
         self.assertIn("pip-audit", workflow)
 
+    def test_audit_invocation_uses_importable_module(self) -> None:
+        # The distribution is named `pip-audit` but its importable module is
+        # `pip_audit`. A hyphenated `-m` target is not a valid Python module and
+        # fails with "No module named pip-audit", which broke every CI matrix job.
+        for name in ("Makefile", "README.md", ".github/workflows/ci.yml"):
+            with self.subTest(file=name):
+                content = _read(name)
+                self.assertNotIn("-m pip-audit", content)
+                self.assertIn("-m pip_audit", content)
+
+    def test_ci_actions_target_node24(self) -> None:
+        # Node 20 action runtimes are deprecated and emit a failing warning
+        # annotation on current runners. Pin the immutable Node 24 releases:
+        # actions/checkout v5 and actions/setup-python v6.
+        workflow = _read(".github/workflows/ci.yml")
+        self.assertIn("actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5", workflow)
+        self.assertIn(
+            "actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6", workflow
+        )
+        self.assertNotIn("actions/checkout@11d5960a326750d5838078e36cf38b85af677262", workflow)
+        self.assertNotIn("actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065", workflow)
+
 
 class ContainerHardeningTests(unittest.TestCase):
     """Static checks: Docker is unavailable in the assessment sandbox, so the

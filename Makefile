@@ -28,7 +28,7 @@ coverage:
 	$(PYTHON) -m coverage report --fail-under=85
 
 audit:
-	$(PYTHON) -m pip-audit -r requirements-dev.lock
+	$(PYTHON) -m pip_audit -r requirements-dev.lock
 
 clean:
 	$(PYTHON) -m coverage erase

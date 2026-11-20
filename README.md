@@ -100,7 +100,7 @@ python -m ruff check .                       # lint (security rules enabled)
 python -m ruff format --check .              # deterministic formatting
 python -m coverage run -m unittest discover -s tests
 python -m coverage report --fail-under=85    # enforced coverage floor
-python -m pip-audit -r requirements-dev.lock # dependency vulnerability audit
+python -m pip_audit -r requirements-dev.lock  # dependency vulnerability audit
 ```
 
 The same commands, plus a CLI smoke test, run on every push to `main` and every
