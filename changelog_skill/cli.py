@@ -6,6 +6,7 @@ import argparse
 import json
 import logging
 import os
+import stat
 import sys
 import tempfile
 from datetime import date as date_type
@@ -105,6 +106,17 @@ def _write_output(text: str, destination: Path | None) -> None:
     if not path.parent.is_dir():
         raise OutputError(f"output directory does not exist: {path.parent}")
 
+    # NamedTemporaryFile is created 0600. Replacing an existing, shared
+    # CHANGELOG with it would silently revoke every other reader's access, so
+    # carry the previous mode over. New files keep the secure 0600 default.
+    existing_mode: int | None = None
+    try:
+        if path.exists():
+            # Copy permission bits only; never propagate setuid/setgid/sticky.
+            existing_mode = stat.S_IMODE(path.stat().st_mode) & 0o777
+    except OSError as exc:
+        raise OutputError(f"could not inspect output file {path}: {exc}") from exc
+
     temporary_name: str | None = None
     try:
         with tempfile.NamedTemporaryFile(
@@ -118,6 +130,8 @@ def _write_output(text: str, destination: Path | None) -> None:
         ) as handle:
             temporary_name = handle.name
             handle.write(text)
+        if existing_mode is not None:
+            os.chmod(temporary_name, existing_mode)
         os.replace(temporary_name, path)
         temporary_name = None
     except OSError as exc:

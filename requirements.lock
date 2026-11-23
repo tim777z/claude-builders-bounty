@@ -1,0 +1,10 @@
+# Canonical runtime lockfile for changelog-skill.
+#
+# [project].dependencies in pyproject.toml is deliberately empty: this CLI has
+# no third-party runtime dependencies. There are therefore no wheels to pin.
+# `python -m pip install --dry-run -r requirements.lock` is a reproducible no-op;
+# install the package itself with `python -m pip install -e .`.
+#
+# Development/CI tools are separately pinned with hashes in requirements-dev.lock.
+# Do not add an unpinned line here: any future runtime dependency must be added
+# to pyproject.toml first and then locked with an exact version and hashes.

@@ -40,7 +40,7 @@ omit = ["tests/*"]
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 85
+fail_under = 90
 
 [tool.ruff]
 line-length = 100

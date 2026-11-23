@@ -110,3 +110,20 @@ class FileAdapterTests(unittest.TestCase):
             source.write_bytes(b"\xff\xfe\x00not utf8")
             with self.assertRaisesRegex(SourceError, "could not read input file"):
                 read_commits_from_file(source)
+
+    def test_rejects_oversized_file_by_byte_count(self) -> None:
+        # A multi-byte payload must be measured in bytes, not characters: a
+        # 1 MiB character limit would let a 4 MiB file into the parser.
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "large.txt"
+            source.write_bytes(("😀" * (MAX_INPUT_BYTES // 4 + 1)).encode("utf-8"))
+            with self.assertRaisesRegex(SourceError, "exceeds the 1 MiB safety limit"):
+                read_commits_from_file(source)
+
+    def test_reads_file_larger_than_the_byte_cap_in_characters(self) -> None:
+        # Conversely, a file just under the byte cap is valid even though its
+        # payload is far fewer than MAX_INPUT_BYTES Unicode characters.
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "multibyte.txt"
+            source.write_bytes(("😀" * 1000).encode("utf-8"))
+            self.assertEqual(read_commits_from_file(source), "😀" * 1000)

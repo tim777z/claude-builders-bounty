@@ -6,12 +6,24 @@ import contextlib
 import io
 import json
 import logging
+import os
+import stat
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from changelog_skill.cli import EXIT_INPUT, EXIT_OK, EXIT_OUTPUT, EXIT_SOURCE, main
+from changelog_skill.cli import (
+    EXIT_INPUT,
+    EXIT_OK,
+    EXIT_OUTPUT,
+    EXIT_SOURCE,
+    LOGGER,
+    _JsonFormatter,
+    main,
+)
+from changelog_skill.model import ChangelogError
 
 SHA = "a" * 40
 VALID_LINE = f"{SHA}\tfeat(cli): add changelog command\n"
@@ -56,6 +68,55 @@ class CliTests(unittest.TestCase):
             self.assertIn("## [0.1.0] - 2026-11-18", rendered)
             self.assertIn("### Features", rendered)
             self.assertIn("add changelog command", rendered)
+
+    @unittest.skipUnless(os.name == "posix", "POSIX file modes only")
+    def test_atomic_write_preserves_existing_file_mode(self) -> None:
+        # A shared CHANGELOG must not become owner-only after a regeneration:
+        # tempfile creates 0600 files, so the previous mode must be carried over.
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "commits.txt"
+            target = Path(directory) / "CHANGELOG.md"
+            source.write_text(VALID_LINE, encoding="utf-8")
+            target.write_text("old", encoding="utf-8")
+            target.chmod(0o644)
+
+            status, _ = run_cli(
+                [
+                    "--input",
+                    str(source),
+                    "--release-version",
+                    "0.1.0",
+                    "--release-date",
+                    "2026-11-18",
+                    "--output",
+                    str(target),
+                ]
+            )
+
+            self.assertEqual(status, EXIT_OK)
+            self.assertEqual(stat.S_IMODE(target.stat().st_mode), 0o644)
+            self.assertIn("add changelog command", target.read_text(encoding="utf-8"))
+
+    @unittest.skipUnless(os.name == "posix", "POSIX file modes only")
+    def test_new_output_file_is_owner_only(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "commits.txt"
+            target = Path(directory) / "CHANGELOG.md"
+            source.write_text(VALID_LINE, encoding="utf-8")
+
+            status, _ = run_cli(
+                [
+                    "--input",
+                    str(source),
+                    "--release-version",
+                    "0.1.0",
+                    "--output",
+                    str(target),
+                ]
+            )
+
+            self.assertEqual(status, EXIT_OK)
+            self.assertEqual(stat.S_IMODE(target.stat().st_mode), 0o600)
 
     def test_writes_to_stdout(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -185,3 +246,51 @@ class CliTests(unittest.TestCase):
 
             self.assertEqual(status, EXIT_OK)
             self.assertTrue(stderr.startswith("INFO: "))
+
+
+class CliFailureTests(unittest.TestCase):
+    def setUp(self) -> None:
+        logging.disable(logging.CRITICAL)
+
+    def tearDown(self) -> None:
+        logging.disable(logging.NOTSET)
+
+    def test_json_formatter_includes_exception_detail(self) -> None:
+        try:
+            raise ValueError("boom")
+        except ValueError:
+            record = LOGGER.makeRecord(
+                "changelog_skill", logging.ERROR, __file__, 1, "failed", (), sys.exc_info()
+            )
+        payload = json.loads(_JsonFormatter().format(record))
+        self.assertEqual(payload["level"], "ERROR")
+        self.assertIn("ValueError: boom", payload["exception"])
+
+    def test_unexpected_package_error_uses_input_exit_code(self) -> None:
+        with patch(
+            "changelog_skill.cli.read_commits_from_repo", side_effect=ChangelogError("unexpected")
+        ):
+            status, _ = run_cli(["--release-version", "1.0.0"])
+        self.assertEqual(status, EXIT_INPUT)
+
+    def test_failed_replace_removes_temporary_file(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "commits.txt"
+            target = Path(directory) / "CHANGELOG.md"
+            source.write_text(VALID_LINE, encoding="utf-8")
+            with patch("changelog_skill.cli.os.replace", side_effect=OSError("denied")):
+                status, _ = run_cli(
+                    [
+                        "--input",
+                        str(source),
+                        "--release-version",
+                        "0.1.0",
+                        "--output",
+                        str(target),
+                    ]
+                )
+            self.assertEqual(status, EXIT_OUTPUT)
+            self.assertFalse(target.exists())
+            self.assertEqual(
+                sorted(path.name for path in Path(directory).iterdir()), ["commits.txt"]
+            )
