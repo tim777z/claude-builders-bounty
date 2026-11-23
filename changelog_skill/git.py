@@ -92,13 +92,27 @@ def read_commits_from_stdin(stream: TextIO | None = None) -> str:
 
 
 def read_commits_from_file(source: Path) -> str:
-    """Read raw commit lines from a local file with a strict size cap."""
+    """Read raw commit lines from a local file with a strict size cap.
+
+    The cap is enforced on bytes actually read, not on ``stat().st_size``:
+    a size check followed by an unbounded read is racy when the file changes
+    (or is a special file such as an infinite device) between the two calls.
+    Reading at most one byte beyond the limit bounds memory use regardless.
+    """
     path = Path(source).expanduser().resolve()
     if not path.is_file():
         raise SourceError(f"input file does not exist: {path}")
-    if path.stat().st_size > MAX_INPUT_BYTES:
+    try:
+        with path.open("rb") as handle:
+            data = handle.read(MAX_INPUT_BYTES + 1)
+    except OSError as exc:
+        raise SourceError(f"could not read input file: {exc}") from exc
+    if len(data) > MAX_INPUT_BYTES:
         raise SourceError("input file exceeds the 1 MiB safety limit")
     try:
-        return path.read_text(encoding="utf-8", errors="strict")
-    except (OSError, UnicodeError) as exc:
+        text = data.decode("utf-8", errors="strict")
+    except UnicodeError as exc:
         raise SourceError(f"could not read input file: {exc}") from exc
+    # Path.read_text() used universal-newline translation; keep that contract
+    # so Windows-authored logs parse identically to Unix-authored ones.
+    return text.replace("\r\n", "\n").replace("\r", "\n")

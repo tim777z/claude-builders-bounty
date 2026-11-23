@@ -8,6 +8,15 @@ You're in the right place.
 
 ---
 
+## Project Type
+
+The deliverable in this repository is a **standalone Python CLI/library**
+(`changelog_skill`) installed with pip. It has no infrastructure-as-code
+component: no Terraform, Kubernetes, Helm, Pulumi or Ansible manifests and no
+cloud services or remote state. `Dockerfile` and `docker-compose.yml` only
+sandbox the CLI locally; the bounty board is GitHub Issues plus documentation.
+IaC rubrics (fmt/validate/policy scanning) therefore do not apply here.
+
 ## How it works
 
 **To post a bounty**
@@ -60,10 +69,13 @@ python -m pip install -e .          # runtime: zero third-party dependencies
 python -m pip install -r requirements-dev.lock
 ```
 
+`requirements.lock` is the canonical runtime lockfile: it is intentionally
+empty because the CLI depends only on the standard library, so
+`python -m pip install --dry-run -r requirements.lock` is a reproducible no-op.
 `requirements-dev.lock` pins every development tool and its transitive
 dependencies with SHA-256 hashes, so a fresh clone resolves the same set CI
 does. Locally you can use `make install-dev` as a shorthand for installing both
-the lockfile and the package. The supported floor is Python 3.11 because the
+the dev lockfile and the package. The supported floor is Python 3.11 because the
 advisory-free `filelock` used by `pip-audit`'s cache (`4.2.12`) requires it;
 older 3.10-compatible releases carry known vulnerabilities, so CI tests only
 interpreters on which the entire hash-locked toolchain can be installed and
@@ -103,7 +115,7 @@ python -m unittest discover -s tests -v      # unit and integration tests
 python -m ruff check .                       # lint (security rules enabled)
 python -m ruff format --check .              # deterministic formatting
 python -m coverage run -m unittest discover -s tests
-python -m coverage report --fail-under=85    # enforced coverage floor
+python -m coverage report --fail-under=90    # enforced coverage floor
 python -m pip_audit -r requirements-dev.lock  # dependency vulnerability audit
 ```
 
@@ -112,6 +124,22 @@ pull request on Python 3.11 and 3.12 in
 [.github/workflows/ci.yml](.github/workflows/ci.yml). Development tooling is
 pinned with exact versions and hashes in `requirements-dev.lock`; GitHub Actions
 are pinned to immutable SHAs.
+
+### Maintenance
+
+[.github/dependabot.yml](.github/dependabot.yml) checks pip and GitHub Actions
+dependencies weekly and opens at most five pull requests per ecosystem. Merge
+those updates only after CI's lint, format, test, coverage and audit gates are
+green; the hash-locked toolchain makes each update reviewable in isolation.
+
+### Releases
+
+Land one focused Conventional Commit per feature or fix, with the tests that
+pin its behaviour in the same change; do not mix formatting, refactors and
+features. When the coverage-enforced suite and audit are green, a maintainer
+creates a semantic release tag (for example `git tag -a v0.1.0 -m v0.1.0` and
+`git push origin v0.1.0`) and repeats it for each meaningful release. CI verifies
+every push and pull request; it does not create tags automatically.
 
 ### Architecture
 

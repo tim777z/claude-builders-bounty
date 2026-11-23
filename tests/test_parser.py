@@ -6,6 +6,7 @@ import unittest
 
 from changelog_skill.model import InputError
 from changelog_skill.parser import (
+    MAX_RAW_LINE_LENGTH,
     MAX_SUBJECT_LENGTH,
     parse_commit_line,
     parse_git_log,
@@ -73,6 +74,21 @@ class ParseCommitLineTests(unittest.TestCase):
         with self.assertRaisesRegex(InputError, "empty commit line"):
             parse_commit_line("   ")
 
+    def test_rejects_non_text_line(self) -> None:
+        with self.assertRaisesRegex(InputError, "expected text"):
+            parse_commit_line(None)  # type: ignore[arg-type]
+
+    def test_rejects_oversized_raw_line(self) -> None:
+        oversized = f"{SHA}\tfeat: {'x' * MAX_RAW_LINE_LENGTH}"
+        with self.assertRaisesRegex(InputError, "exceeds 512 characters"):
+            parse_commit_line(oversized)
+
+    def test_rejects_whitespace_only_subject(self) -> None:
+        # Plain spaces are stripped before the regex, so use a non-breaking
+        # space to exercise the explicit empty-subject guard.
+        with self.assertRaisesRegex(InputError, "subject is empty"):
+            parse_commit_line(f"{SHA}\tfeat: \u00a0")
+
     def test_error_messages_include_line_number(self) -> None:
         with self.assertRaisesRegex(InputError, "line 42:"):
             parse_commit_line("broken", line_number=42)
@@ -109,6 +125,10 @@ class ParseGitLogTests(unittest.TestCase):
         text = f"{SHA}\tfeat: ok\n{SHA}\tfeat: spoof\u202ereversed\n"
         with self.assertRaisesRegex(InputError, "control character"):
             parse_git_log_lenient(text)
+
+    def test_lenient_mode_rejects_invalid_max_lines(self) -> None:
+        with self.assertRaisesRegex(InputError, "max_lines must be"):
+            parse_git_log_lenient("", max_lines=0)
 
     def test_rejects_non_text_payload(self) -> None:
         with self.assertRaisesRegex(InputError, "expected text"):

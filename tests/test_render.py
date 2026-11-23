@@ -81,6 +81,10 @@ class RenderChangelogTests(unittest.TestCase):
         with self.assertRaisesRegex(InputError, "not a real calendar date"):
             render_changelog((), version="0.1.0", release_date="2026-02-30")
 
+    def test_rejects_unvalidated_commit_objects(self) -> None:
+        with self.assertRaisesRegex(InputError, "Commit instances"):
+            render_changelog(("raw",), version="0.1.0", release_date=DATE)  # type: ignore[arg-type]
+
     def test_renders_output_of_parser_end_to_end(self) -> None:
         commits = parse_git_log(f"{SHA}\tfeat(cli): add --output flag\n")
         output = render_changelog(commits, version="0.1.0", release_date=DATE)

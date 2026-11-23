@@ -25,7 +25,7 @@ test:
 
 coverage:
 	$(PYTHON) -m coverage run -m unittest discover -s tests
-	$(PYTHON) -m coverage report --fail-under=85
+	$(PYTHON) -m coverage report --fail-under=90
 
 audit:
 	$(PYTHON) -m pip_audit -r requirements-dev.lock
