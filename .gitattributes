@@ -1,0 +1,18 @@
+# Normalize text diffs and keep lockfiles reviewable.
+* text=auto eol=lf
+
+*.py text diff=python
+*.md text diff=markdown
+*.yml text
+*.toml text
+*.txt text
+*.lock text
+Makefile text
+Dockerfile text
+.env.example text
+
+# Never treat these as text.
+*.png binary
+*.jpg binary
+*.gif binary
+*.pdf binary
