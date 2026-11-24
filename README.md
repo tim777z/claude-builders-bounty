@@ -152,6 +152,7 @@ every push and pull request; it does not create tags automatically.
 | `changelog_skill/cli.py` | Argument parsing, exit codes, atomic output writes |
 | `Makefile`, `requirements-dev.lock` | One-command, reproducible local/CI toolchain |
 | `Dockerfile`, `docker-compose.yml` | Hardened, one-command isolated execution |
+| `SECURITY.md` | Vulnerability reporting and security design notes |
 | `tests/` | Unit tests mirroring each module |
 
 Data flows one way: adapter → parser → renderer → output. Parsing and
@@ -166,7 +167,9 @@ control characters, Unicode line/paragraph separators and bidirectional text
 overrides (Trojan Source) are rejected with line-numbered errors, as are
 unknown commit types; Markdown/HTML syntax in commit subjects is escaped so a
 hostile commit cannot inject active content into a published CHANGELOG; output
-is written atomically; CI runs with read-only permissions.
+is written atomically; CI runs with read-only permissions. See
+[SECURITY.md](SECURITY.md) for vulnerability reporting and the full security
+posture.
 
 ### Isolated execution (Docker)
 

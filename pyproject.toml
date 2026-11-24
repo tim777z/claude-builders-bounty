@@ -27,6 +27,9 @@ changelog-skill = "changelog_skill.cli:main"
 include = ["changelog_skill*"]
 exclude = ["tests*"]
 
+[tool.setuptools.package-data]
+changelog_skill = ["py.typed"]
+
 # Explicit test discovery so local runners and static scanners can find the
 # unittest suite without guessing a command.
 [tool.pytest.ini_options]

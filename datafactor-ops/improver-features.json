@@ -114,6 +114,16 @@
       "id": "release-cadence-guidance",
       "status": "verified",
       "test": "python -m unittest discover -s tests -v"
+    },
+    {
+      "id": "security-policy-and-typed-package-marker",
+      "status": "verified",
+      "test": "python -m unittest discover -s tests -v"
+    },
+    {
+      "id": "main-module-and-cli-error-path-coverage",
+      "status": "verified",
+      "test": "python -m coverage run -m unittest discover -s tests && python -m coverage report --fail-under=90"
     }
   ]
 }
