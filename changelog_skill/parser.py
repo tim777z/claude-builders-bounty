@@ -50,17 +50,26 @@ def _reject_unsafe_text(text: str) -> None:
     if not isinstance(text, str):
         raise InputError(f"expected text, got {type(text).__name__}")
     line_number = 1
+    previous = ""
     for char in text:
-        if char == "\n":
-            line_number += 1
+        if char in ("\r", "\n"):
+            # splitlines() treats CRLF as one terminator; count it the same way
+            # so diagnostics point at the real line in Windows-authored logs.
+            if char == "\n" and previous == "\r":
+                pass
+            else:
+                line_number += 1
+            previous = char
             continue
-        if char in ("\r", "\t"):
+        if char == "\t":
+            previous = char
             continue
         code = ord(char)
         if _is_forbidden(code):
             raise InputError(
                 f"line {line_number}: input contains a control character (U+{code:04X})"
             )
+        previous = char
 
 
 def _reject_control_characters(
@@ -142,13 +151,13 @@ def parse_git_log(text: str, *, max_lines: int = MAX_LINES) -> tuple[Commit, ...
         raise InputError(f"max_lines must be an integer between 1 and {MAX_LINES}")
     _reject_unsafe_text(text)
 
-    lines = [line for line in text.splitlines() if line.strip()]
+    # Keep the original line numbers: blank separator lines are skipped, but
+    # operators need the real position of a hostile or malformed commit line.
+    lines = [(index, line) for index, line in enumerate(text.splitlines(), start=1) if line.strip()]
     if len(lines) > max_lines:
         raise InputError(f"commit history exceeds the {max_lines} line safety limit")
 
-    return tuple(
-        parse_commit_line(line, line_number=index) for index, line in enumerate(lines, start=1)
-    )
+    return tuple(parse_commit_line(line, line_number=index) for index, line in lines)
 
 
 def parse_git_log_lenient(
@@ -164,13 +173,13 @@ def parse_git_log_lenient(
         raise InputError(f"max_lines must be an integer between 1 and {MAX_LINES}")
     _reject_unsafe_text(text)
 
-    lines = [line for line in text.splitlines() if line.strip()]
+    lines = [(index, line) for index, line in enumerate(text.splitlines(), start=1) if line.strip()]
     if len(lines) > max_lines:
         raise InputError(f"commit history exceeds the {max_lines} line safety limit")
 
     commits: list[Commit] = []
     skipped = 0
-    for index, line in enumerate(lines, start=1):
+    for index, line in lines:
         try:
             commits.append(parse_commit_line(line, line_number=index))
         except InputError:

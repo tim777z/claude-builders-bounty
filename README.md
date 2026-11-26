@@ -81,6 +81,12 @@ older 3.10-compatible releases carry known vulnerabilities, so CI tests only
 interpreters on which the entire hash-locked toolchain can be installed and
 audited cleanly.
 
+For contributors already using `uv`, the committed `uv.lock` is an additional
+standard-tool lockfile: `uv sync --extra dev` installs the same four pinned dev
+tools with hashes resolved from `pyproject.toml`. CI and `make install-dev`
+continue to use `requirements-dev.lock` as the canonical pip install path, so
+the published audit and test results always come from one toolchain.
+
 ### Usage
 
 ```bash
@@ -108,12 +114,13 @@ is unchanged. Add `--verbose` to enable DEBUG-level records.
 
 ```bash
 make test                                  # canonical entry point for the suite
-make all                                   # lint + format check + tests + coverage
+make all                                   # lint + format + typecheck + tests + coverage
 
 # Equivalent direct commands (make is optional; works on any platform):
 python -m unittest discover -s tests -v      # unit and integration tests
 python -m ruff check .                       # lint (security rules enabled)
 python -m ruff format --check .              # deterministic formatting
+python -m mypy                               # strict type check (pyproject.toml)
 python -m coverage run -m unittest discover -s tests
 python -m coverage report --fail-under=90    # enforced coverage floor
 python -m pip_audit -r requirements-dev.lock  # dependency vulnerability audit
@@ -121,9 +128,11 @@ python -m pip_audit -r requirements-dev.lock  # dependency vulnerability audit
 
 The same commands, plus a CLI smoke test, run on every push to `main` and every
 pull request on Python 3.11 and 3.12 in
-[.github/workflows/ci.yml](.github/workflows/ci.yml). Development tooling is
-pinned with exact versions and hashes in `requirements-dev.lock`; GitHub Actions
-are pinned to immutable SHAs.
+[.github/workflows/ci.yml](.github/workflows/ci.yml). `.python-version` pins the
+local default to 3.11 so contributors get the same interpreter as the first CI
+matrix job; the package still supports 3.12. Development tooling (including
+`mypy`) is pinned with exact versions and hashes in `requirements-dev.lock`;
+GitHub Actions are pinned to immutable SHAs.
 
 ### Maintenance
 
@@ -150,7 +159,7 @@ every push and pull request; it does not create tags automatically.
 | `changelog_skill/render.py` | Deterministic Markdown rendering and escaping |
 | `changelog_skill/git.py` | Bounded git/filesystem adapters |
 | `changelog_skill/cli.py` | Argument parsing, exit codes, atomic output writes |
-| `Makefile`, `requirements-dev.lock` | One-command, reproducible local/CI toolchain |
+| `Makefile`, `requirements-dev.lock`, `uv.lock` | One-command, reproducible pip/uv toolchains |
 | `Dockerfile`, `docker-compose.yml` | Hardened, one-command isolated execution |
 | `SECURITY.md` | Vulnerability reporting and security design notes |
 | `tests/` | Unit tests mirroring each module |
@@ -180,6 +189,10 @@ backing services to orchestrate:
 docker compose build
 RELEASE_VERSION=0.2.0 docker compose run --rm changelog
 ```
+
+`RELEASE_VERSION` and `RELEASE_DATE` are the only variables Compose reads;
+both are optional, non-secret release metadata and are documented in
+[.env.example](.env.example). Never put credentials in that file.
 
 The image runs as a non-root UID and writes no bytecode; Compose adds a
 read-only root filesystem, drops all Linux capabilities, sets

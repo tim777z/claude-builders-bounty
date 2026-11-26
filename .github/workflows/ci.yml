@@ -51,6 +51,12 @@ jobs:
       - name: Check formatting
         run: python -m ruff format --check .
 
+      - name: Type check
+        # The package ships py.typed; strict type errors are a public API
+        # regression. Config lives in pyproject.toml, so CI and local runs
+        # enforce exactly the same contract via `make typecheck`.
+        run: python -m mypy
+
       - name: Run unit tests with an enforced coverage floor
         run: |
           python -m coverage run -m unittest discover -s tests -v
