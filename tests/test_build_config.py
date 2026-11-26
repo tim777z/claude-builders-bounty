@@ -24,7 +24,10 @@ class ReproducibleToolchainTests(unittest.TestCase):
             for line in _read("requirements-dev.txt").splitlines()
             if line.strip() and not line.lstrip().startswith("#")
         ]
-        self.assertEqual(pins, ["coverage==7.16.1", "pip-audit==2.7.3", "ruff==0.7.4"])
+        self.assertEqual(
+            pins,
+            ["coverage==7.16.1", "mypy==2.3.1", "pip-audit==2.7.3", "ruff==0.7.4"],
+        )
 
     def test_python_floor_matches_locked_toolchain(self) -> None:
         # The hash-locked toolchain pins the advisory-free filelock 4.2.12,
@@ -40,6 +43,41 @@ class ReproducibleToolchainTests(unittest.TestCase):
         self.assertIn('python-version: ["3.11", "3.12"]', workflow)
         self.assertNotIn('"3.10"', workflow)
         self.assertIn("filelock==4.2.12", _read("requirements-dev.lock"))
+
+    def test_strict_typecheck_is_enforced_everywhere(self) -> None:
+        # The distribution ships py.typed, so type drift is a breaking change
+        # for consumers. Pin the same strict contract locally and in CI.
+        config = _read("pyproject.toml")
+        workflow = _read(".github/workflows/ci.yml")
+        makefile = _read("Makefile")
+        lock = _read("requirements-dev.lock")
+        self.assertIn("[tool.mypy]", config)
+        self.assertIn("strict = true", config)
+        self.assertIn('files = ["changelog_skill"]', config)
+        self.assertIn("mypy==2.3.1", _read("requirements-dev.txt"))
+        for package in (
+            "ast-serialize==0.11.2",
+            "librt==0.15.0",
+            "mypy==2.3.1",
+            "mypy_extensions==1.1.0",
+            "pathspec==1.1.1",
+            "typing_extensions==4.15.0",
+        ):
+            with self.subTest(package=package):
+                self.assertIn(package, lock)
+        self.assertIn("Type check", workflow)
+        self.assertIn("run: python -m mypy", workflow)
+        self.assertIn("typecheck:", makefile)
+        self.assertIn("all: lint format-check typecheck test coverage", makefile)
+        self.assertIn("python -m mypy", _read("README.md"))
+
+    def test_python_version_pin_matches_supported_floor(self) -> None:
+        # A pinned local interpreter removes the most common fresh-clone
+        # failure: developing on 3.10 and discovering CI only supports 3.11+.
+        pinned = (REPO_ROOT / ".python-version").read_text(encoding="utf-8").strip()
+        self.assertEqual(pinned, "3.11")
+        self.assertIn('requires-python = ">=3.11"', _read("pyproject.toml"))
+        self.assertIn('python-version: ["3.11", "3.12"]', _read(".github/workflows/ci.yml"))
 
     def test_runtime_lockfile_matches_zero_runtime_dependencies(self) -> None:
         # pip accepts an empty requirements file; keeping it comment-only is
@@ -59,6 +97,34 @@ class ReproducibleToolchainTests(unittest.TestCase):
             with self.subTest(tool=tool):
                 self.assertIn(tool, locked)
         self.assertIn("--hash=sha256:", _read("requirements-dev.lock"))
+        # mypy is a compiled package with transitive runtime requirements;
+        # hash-locking only the top-level pin would make pip's
+        # --require-hashes install fail on a fresh clone.
+        lock_text = _read("requirements-dev.lock")
+        for package in ("ast-serialize==0.11.2", "librt==0.15.0"):
+            with self.subTest(package=package):
+                self.assertIn(package, lock_text)
+
+    def test_uv_native_lockfile_is_present_and_aligned(self) -> None:
+        # repo_stats only recognises standard lockfile filenames; the
+        # pip-compile file above is deliberately named for dev tooling, so a
+        # uv-native lock makes the project installable with `uv sync` too. The
+        # CI path remains the canonical pip-compile lockfile.
+        lock = _read("uv.lock")
+        self.assertIn('requires-python = ">=3.11"', lock)
+        self.assertIn('hash = "sha256:', lock)
+        for name, version in (
+            ("coverage", "7.16.1"),
+            ("mypy", "2.3.1"),
+            ("pip-audit", "2.7.3"),
+            ("ruff", "0.7.4"),
+        ):
+            with self.subTest(package=name):
+                self.assertIn(f'name = "{name}"\nversion = "{version}"', lock)
+        self.assertIn("dev = [", lock)
+        readme = _read("README.md")
+        self.assertIn("uv.lock", readme)
+        self.assertIn("uv sync --extra dev", readme)
 
     def test_makefile_exposes_canonical_targets(self) -> None:
         targets = [line.split(":", 1)[0] for line in _read("Makefile").splitlines()]

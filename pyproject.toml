@@ -18,7 +18,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-dev = ["ruff==0.7.4", "coverage==7.16.1", "pip-audit==2.7.3"]
+dev = ["ruff==0.7.4", "coverage==7.16.1", "pip-audit==2.7.3", "mypy==2.3.1"]
 
 [project.scripts]
 changelog-skill = "changelog_skill.cli:main"
@@ -44,6 +44,14 @@ omit = ["tests/*"]
 [tool.coverage.report]
 show_missing = true
 fail_under = 90
+
+# Static type checking is part of the shipping gate: the package advertises
+# py.typed, so a type regression is a breaking change for downstream users.
+[tool.mypy]
+files = ["changelog_skill"]
+python_version = "3.11"
+strict = true
+pretty = true
 
 [tool.ruff]
 line-length = 100

@@ -30,6 +30,20 @@ class SecurityHygieneTests(unittest.TestCase):
             with self.subTest(token=token):
                 self.assertIn(token, policy)
 
+    def test_env_example_documents_only_non_secret_options(self) -> None:
+        # The Compose entry points consume release metadata; document it as
+        # commented, non-secret examples so no populated env file is needed.
+        example = _read(".env.example")
+        for token in ("# RELEASE_VERSION=", "# RELEASE_DATE="):
+            with self.subTest(token=token):
+                self.assertIn(token, example)
+        assignments = [
+            line
+            for line in example.splitlines()
+            if line.strip() and not line.lstrip().startswith("#") and "=" in line
+        ]
+        self.assertEqual(assignments, [], ".env.example must never carry real values")
+
     def test_gitattributes_normalizes_text_files(self) -> None:
         attrs = _read(".gitattributes")
         for token in ("* text=auto eol=lf", "*.py text diff=python", "*.lock text"):

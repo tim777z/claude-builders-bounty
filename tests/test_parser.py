@@ -102,6 +102,27 @@ class ParseGitLogTests(unittest.TestCase):
         self.assertEqual([commit.subject for commit in commits], ["first", "second"])
         self.assertEqual([commit.kind for commit in commits], ["feat", "fix"])
 
+    def test_error_line_numbers_account_for_blank_separators(self) -> None:
+        # Diagnostics are used to locate hostile commits in a history; a blank
+        # separator must not shift the reported line number onto the wrong row.
+        text = f"{SHA}\tfeat: ok\n\n{SHA}\twip: bad\n"
+        with self.assertRaisesRegex(InputError, "line 3:"):
+            parse_git_log(text)
+
+    def test_control_character_line_numbers_handle_cr_only_logs(self) -> None:
+        # splitlines() treats a bare CR as a terminator, so the payload guard
+        # must count it as one too (file input may not be newline-normalised).
+        text = f"{SHA}\tfeat: ok\r{SHA}\tfeat: spoof\u202ereversed"
+        with self.assertRaisesRegex(InputError, "line 2:"):
+            parse_git_log(text)
+
+    def test_control_character_line_numbers_handle_crlf_logs(self) -> None:
+        # CRLF is one terminator, not two; otherwise Windows-authored logs
+        # would report the second line as line three.
+        text = f"{SHA}\tfeat: ok\r\n{SHA}\tfeat: spoof\u202ereversed"
+        with self.assertRaisesRegex(InputError, "line 2:"):
+            parse_git_log(text)
+
     def test_enforces_line_limit(self) -> None:
         text = f"{SHA}\tfeat: first\n{'b' * 40}\tfix: second\n"
         with self.assertRaisesRegex(InputError, "safety limit"):
