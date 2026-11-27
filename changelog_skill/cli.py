@@ -45,6 +45,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="changelog-skill",
         description="Generate a Markdown CHANGELOG from Conventional Commits.",
+        epilog=(
+            "Exit codes: 0 success, 2 usage error, 3 invalid input, "
+            "4 unreadable source, 5 unwritable output."
+        ),
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
 
