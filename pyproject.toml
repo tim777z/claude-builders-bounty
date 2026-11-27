@@ -7,15 +7,29 @@ name = "changelog-skill"
 version = "0.1.0"
 description = "Generate a Markdown CHANGELOG from Conventional Commits, with no runtime dependencies."
 readme = "README.md"
+license = { file = "LICENSE" }
 requires-python = ">=3.11"
 dependencies = []
 authors = [{ name = "claude-builders-bounty contributors" }]
+keywords = ["changelog", "conventional-commits", "git", "cli", "release-notes"]
 classifiers = [
   "Environment :: Console",
+  "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Topic :: Software Development :: Version Control :: Git",
+  "Typing :: Typed",
 ]
+
+[project.urls]
+Homepage = "https://github.com/tim777z/claude-builders-bounty"
+Repository = "https://github.com/tim777z/claude-builders-bounty"
+Issues = "https://github.com/tim777z/claude-builders-bounty/issues"
+Security = "https://github.com/tim777z/claude-builders-bounty/blob/main/SECURITY.md"
+Changelog = "https://github.com/tim777z/claude-builders-bounty/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = ["ruff==0.7.4", "coverage==7.16.1", "pip-audit==2.7.3", "mypy==2.3.1"]

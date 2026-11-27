@@ -1,154 +1,37 @@
-{
+﻿{
   "features": [
-    {
-      "id": "ci-python-floor-and-lockfile-consistency",
-      "status": "verified",
-      "test": "python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "ci-audit-invocation-fix",
-      "status": "verified",
-      "test": "python -m pip_audit --version && python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "ci-node24-action-pins",
-      "status": "verified",
-      "test": "python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "remove-stray-runtime-log",
-      "status": "verified",
-      "test": "python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "changelog-core-with-tests",
-      "status": "verified",
-      "test": "python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "safe-cli-and-git-adapter-with-tests",
-      "status": "verified",
-      "test": "python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "manifest-lint-ci-dependency-hygiene",
-      "status": "verified",
-      "test": "python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "docs-env-example-and-generated-changelog",
-      "status": "verified",
-      "test": "python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "bounded-stdin-input",
-      "status": "verified",
-      "test": "python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "unicode-control-and-bidi-hardening",
-      "status": "verified",
-      "test": "python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "cache-ignore-hygiene",
-      "status": "verified",
-      "test": "python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "ci-python-version-matrix",
-      "status": "verified",
-      "test": "python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "stray-runtime-log-removed",
-      "status": "verified",
-      "test": "python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "fresh-clone-reproducible-toolchain",
-      "status": "verified",
-      "test": "python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "coverage-threshold-in-ci",
-      "status": "verified",
-      "test": "python -m coverage run -m unittest discover -s tests && python -m coverage report --fail-under=85"
-    },
-    {
-      "id": "dependency-audit-in-ci",
-      "status": "verified",
-      "test": "python -m pip_audit -r requirements-dev.lock"
-    },
-    {
-      "id": "hardened-container-self-containment",
-      "status": "verified",
-      "test": "python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "structured-json-logging",
-      "status": "verified",
-      "test": "python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "bounded-file-input-and-output-mode",
-      "status": "verified",
-      "test": "python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "git-error-path-tests-and-coverage-90",
-      "status": "verified",
-      "test": "python -m coverage run -m unittest discover -s tests && python -m coverage report --fail-under=90"
-    },
-    {
-      "id": "runtime-lockfile-and-fresh-clone-docs",
-      "status": "verified",
-      "test": "python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "project-type-and-maintenance-docs",
-      "status": "verified",
-      "test": "python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "release-cadence-guidance",
-      "status": "verified",
-      "test": "python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "security-policy-and-typed-package-marker",
-      "status": "verified",
-      "test": "python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "main-module-and-cli-error-path-coverage",
-      "status": "verified",
-      "test": "python -m coverage run -m unittest discover -s tests && python -m coverage report --fail-under=90"
-    },
-    {
-      "id": "strict-typecheck-in-ci",
-      "status": "verified",
-      "test": "python -m mypy && python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "fresh-clone-python-version-pin",
-      "status": "verified",
-      "test": "python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "env-example-runtime-variables",
-      "status": "verified",
-      "test": "python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "parser-line-number-accuracy",
-      "status": "verified",
-      "test": "python -m unittest discover -s tests -v"
-    },
-    {
-      "id": "standard-uv-lockfile",
-      "status": "verified",
-      "test": "python -m unittest discover -s tests -v"
-    }
+    {"id": "ci-python-floor-and-lockfile-consistency", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "ci-audit-invocation-fix", "status": "verified", "test": "python -m pip_audit --version && python -m unittest discover -s tests -v"},
+    {"id": "ci-node24-action-pins", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "remove-stray-runtime-log", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "changelog-core-with-tests", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "safe-cli-and-git-adapter-with-tests", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "manifest-lint-ci-dependency-hygiene", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "docs-env-example-and-generated-changelog", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "bounded-stdin-input", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "unicode-control-and-bidi-hardening", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "cache-ignore-hygiene", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "ci-python-version-matrix", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "stray-runtime-log-removed", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "fresh-clone-reproducible-toolchain", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "coverage-threshold-in-ci", "status": "verified", "test": "python -m coverage run -m unittest discover -s tests && python -m coverage report --fail-under=85"},
+    {"id": "dependency-audit-in-ci", "status": "verified", "test": "python -m pip_audit -r requirements-dev.lock"},
+    {"id": "hardened-container-self-containment", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "structured-json-logging", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "bounded-file-input-and-output-mode", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "git-error-path-tests-and-coverage-90", "status": "verified", "test": "python -m coverage run -m unittest discover -s tests && python -m coverage report --fail-under=90"},
+    {"id": "runtime-lockfile-and-fresh-clone-docs", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "project-type-and-maintenance-docs", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "release-cadence-guidance", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "security-policy-and-typed-package-marker", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "main-module-and-cli-error-path-coverage", "status": "verified", "test": "python -m coverage run -m unittest discover -s tests && python -m coverage report --fail-under=90"},
+    {"id": "strict-typecheck-in-ci", "status": "verified", "test": "python -m mypy && python -m unittest discover -s tests -v"},
+    {"id": "fresh-clone-python-version-pin", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "env-example-runtime-variables", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "parser-line-number-accuracy", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "standard-uv-lockfile", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "contributing-guide-and-governance-links", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "security-boundary-regression-tests", "status": "verified", "test": "python -m unittest discover -s tests -v"},
+    {"id": "pyproject-metadata-and-cli-hardening", "status": "verified", "test": "python -m unittest discover -s tests -v && python -m mypy && python -m ruff check ."}
   ]
 }

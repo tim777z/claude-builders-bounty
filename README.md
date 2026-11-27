@@ -162,6 +162,7 @@ every push and pull request; it does not create tags automatically.
 | `Makefile`, `requirements-dev.lock`, `uv.lock` | One-command, reproducible pip/uv toolchains |
 | `Dockerfile`, `docker-compose.yml` | Hardened, one-command isolated execution |
 | `SECURITY.md` | Vulnerability reporting and security design notes |
+| `CONTRIBUTING.md` | Contributor workflow and quality gates |
 | `tests/` | Unit tests mirroring each module |
 
 Data flows one way: adapter → parser → renderer → output. Parsing and
@@ -213,6 +214,9 @@ path above is the primary workflow.
   Conventional Commit messages (`feat:`, `fix:`, `test:`, `docs:`, `ci:`)
 - Never commit credentials, `.env` files or runtime logs (see
   [.env.example](.env.example) and `.gitignore`)
+
+For code contributions, see [CONTRIBUTING.md](CONTRIBUTING.md). For vulnerability
+reporting, see [SECURITY.md](SECURITY.md).
 
 ---
 

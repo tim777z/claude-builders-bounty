@@ -126,6 +126,20 @@ class ReproducibleToolchainTests(unittest.TestCase):
         self.assertIn("uv.lock", readme)
         self.assertIn("uv sync --extra dev", readme)
 
+    def test_pyproject_metadata_is_complete(self) -> None:
+        config = _read("pyproject.toml")
+        for token in (
+            'license = { file = "LICENSE" }',
+            "keywords = [",
+            "[project.urls]",
+            "Security =",
+            "Typing :: Typed",
+            'Programming Language :: Python :: 3.11',
+            'Programming Language :: Python :: 3.12',
+        ):
+            with self.subTest(token=token):
+                self.assertIn(token, config)
+
     def test_makefile_exposes_canonical_targets(self) -> None:
         targets = [line.split(":", 1)[0] for line in _read("Makefile").splitlines()]
         for target in ("install-dev", "lint", "format-check", "test", "coverage", "audit"):
